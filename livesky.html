@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Sky 🌌 | Star Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #000 url('stars-bg.gif') repeat; /* same starry background */
+      color: #eee;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 220px;
+      background: #111;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #333;
+    }
+    .sidebar h2 {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .nav-links {
+      list-style: none;
+      padding: 0;
+    }
+    .nav-links li {
+      margin: 10px 0;
+    }
+    .nav-links a {
+      display: block;
+      padding: 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+      color: #9cf;
+      text-decoration: none;
+    }
+    .nav-links a:hover {
+      background: #222;
+    }
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .content h1 {
+      text-align: center;
+      margin: 0;
+      padding: 12px;
+      background: rgba(0,0,0,0.6);
+      border-bottom: 1px solid #333;
+    }
+    iframe {
+      flex: 1;
+      border: none;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>🌌 Star Tracker</h2>
+    <ul class="nav-links">
+      <li><a href="index.html">🏠 Home</a></li>
+      <li><a href="factfiles.html">📂 Fact Files</a></li>
+      <li><a href="livesky.html">🌌 Live Sky</a></li>
+      <li><a href="events.html">📅 Events Calendar</a></li>
+      <li><a href="about.html">ℹ️ About</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main -->
+  <main class="content">
+    <h1>🌌 Live Sky View</h1>
+    <!-- Stellarium Web Embed -->
+    <iframe 
+    src="https://stellarium.org/stellarium-web" 
+    width="100%" 
+    height="600px" 
+    frameborder="0" 
+    allowfullscreen>
+</iframe>
+
+  </main>
+</body>
+</html>
