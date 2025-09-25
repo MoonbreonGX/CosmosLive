@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fact Files — Cosmos Live</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./factfiles.css">
+</head>
+<body>
+  <div id="starfield" aria-hidden="true"></div>
+
+  <button id="toggleBtn" class="toggle-btn" aria-label="Toggle sidebar">☰</button>
+
+  <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+    <ul>
+      <li><a href="index.html">🏠 <span class="label">Home</span></a></li>
+      <li><a href="factfiles.html">📖 <span class="label">Fact Files</span></a></li>
+      <li><a href="#">🌌 <span class="label">Live Sky</span></a></li>
+      <li><a href="events.html">📅 <span class="label">Events</span></a></li>
+      <li><a href="#">ℹ️ <span class="label">About</span></a></li>
+    </ul>
+  </nav>
+
+  <div class="icon-strip" aria-hidden="false">
+    <a href="index.html" title="Home">🏠</a>
+    <a href="factfiles.html" title="Fact Files">📖</a>
+    <a href="#" title="Live Sky">🌌</a>
+    <a href="events.html" title="Events">📅</a>
+    <a href="#" title="About">ℹ️</a>
+  </div>
+
+  <main id="content" class="content">
+    <h1>Fact Files</h1>
+    <p>Click a card to expand details. Images are public Wikimedia examples — replace them with your local `/images/...` if you prefer.</p>
+
+    <!-- Stars -->
+    <article class="fact-card">
+      <header>
+        <h2 class="fact-title" data-target="star-detail">⭐ Stars</h2>
+        <button class="expand-btn" aria-controls="star-detail" aria-expanded="false">▼</button>
+      </header>
+      <div id="star-detail" class="detail">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c3/Solar_sys8.jpg" alt="Star example">
+        <p>Stars are massive spheres of plasma generating energy by nuclear fusion. The Sun is our nearest star.</p>
+        <ul>
+          <li>Classified by spectral type (O, B, A, F, G, K, M).</li>
+          <li>End states: white dwarf, neutron star, or black hole.</li>
+          <li>Massive stars live fast and die young.</li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- Galaxies -->
+    <article class="fact-card">
+      <header>
+        <h2 class="fact-title" data-target="galaxy-detail">🌌 Galaxies</h2>
+        <button class="expand-btn" aria-controls="galaxy-detail" aria-expanded="false">▼</button>
+      </header>
+      <div id="galaxy-detail" class="detail">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/50/NGC_4414_%28NASA-med%29.jpg" alt="Galaxy example">
+        <p>Galaxies are huge systems of stars, gas, dust and dark matter. The Milky Way is our home galaxy.</p>
+        <ul>
+          <li>Types: spiral, elliptical, and irregular.</li>
+          <li>Typical sizes: tens of thousands to hundreds of thousands of light-years across.</li>
+          <li>Galaxies grow by mergers.</li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- Nebulas -->
+    <article class="fact-card">
+      <header>
+        <h2 class="fact-title" data-target="nebula-detail">☁️ Nebulas</h2>
+        <button class="expand-btn" aria-controls="nebula-detail" aria-expanded="false">▼</button>
+      </header>
+      <div id="nebula-detail" class="detail">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Orion_Nebula_-_Hubble_2006_mosaic_18000.jpg" alt="Nebula example">
+        <p>Nebulas are clouds of gas and dust — often star-forming regions or remnants of dead stars.</p>
+        <ul>
+          <li>Types: emission, reflection, planetary, and dark nebulas.</li>
+          <li>Orion Nebula is one of the brightest star-forming regions we can see.</li>
+          <li>Supernova remnants are also nebulas.</li>
+        </ul>
+      </div>
+    </article>
+  </main>
+
+  <script defer src="./script.js"></script>
+  <script defer src="./factfiles.js"></script>
+</body>
+</html>
