@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cosmos Live</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- star background container -->
+  <div id="starfield" aria-hidden="true"></div>
+
+  <!-- Toggle button -->
+  <button id="toggleBtn" class="toggle-btn" aria-label="Toggle sidebar">☰</button>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+    <ul>
+      <li><a href="index.html">🏠 <span class="label">Home</span></a></li>
+      <li><a href="factfiles.html">📖 <span class="label">Fact Files</span></a></li>
+      <li><a href="livesky.html">🌌 <span class="label">Live Sky</span></a></li>
+      <li><a href="events.html">📅 <span class="label">Events</span></a></li>
+      <li><a href="#">ℹ️ <span class="label">About</span></a></li>
+    </ul>
+  </nav>
+
+  <!-- Icon strip (always visible) -->
+  <div class="icon-strip" aria-hidden="false">
+    <a href="index.html" title="Home">🏠</a>
+    <a href="factfiles.html" title="Fact Files">📖</a>
+    <a href="livesky.html" title="Live Sky">🌌</a>
+    <a href="events.html" title="Events">📅</a>
+    <a href="#" title="About">ℹ️</a>
+  </div>
+
+  <!-- Main content -->
+  <main id="content" class="content">
+    <h1>Cosmos Live</h1>
+    <p>Track the stars, follow cosmic events, and explore the night sky in real time.</p>
+
+    <section class="card">
+      <p>UK Local Time:</p>
+      <div id="clock" class="time">—</div>
+      <a class="btn" href="#">See The Night Sky Live!</a>
+    </section>
+  </main>
+
+  <script defer src="./script.js"></script>
+</body>
+</html>
