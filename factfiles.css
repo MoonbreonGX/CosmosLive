@@ -1,0 +1,63 @@
+/* factfiles.css - styling for factfiles.html */
+
+/* fact card */
+.fact-card {
+  width: 100%;
+  max-width: 920px;
+  background: rgba(255,255,255,0.03);
+  margin: 1rem 0;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(255,255,255,0.03);
+  transition: transform 180ms ease, background 180ms;
+  cursor: default;
+}
+.fact-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.045); }
+
+/* header layout */
+.fact-card header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+}
+.fact-card .fact-title {
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+.expand-btn {
+  background: transparent;
+  border: 0;
+  color: #ccc;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+/* details: use max-height transition for smoothness */
+.detail {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 360ms ease, padding 220ms ease;
+  padding-top: 0;
+}
+.detail.show {
+  padding-top: 1rem;
+  max-height: 1200px; /* large enough for content */
+}
+
+/* images */
+.detail img {
+  width: 100%;
+  max-width: 680px;
+  border-radius: 10px;
+  display:block;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+.detail p { margin: .6rem 0; }
+.detail ul { margin-left: 1.1rem; }
+
+/* smaller screens tweak */
+@media (max-width: 820px) {
+  .fact-card { padding: 0.9rem; }
+  .detail img { max-width: 100%; }
+}
