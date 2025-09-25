@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🌌 Cosmic Events Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+  <style>
+    /* === Base styles === */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(ellipse at bottom, #0d1b2a, #000);
+      color: #fff;
+      overflow-x: hidden;
+    }
+    h1 { font-size: 1.8rem; margin: 0; }
+    a { text-decoration: none; color: inherit; }
+
+    /* === Starry background === */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: url("https://www.transparenttextures.com/patterns/stardust.png");
+      opacity: 0.2;
+      z-index: 0;
+    }
+
+    /* === Sidebar === */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 240px;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      padding-top: 20px;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      z-index: 2;
+    }
+    .sidebar.closed { transform: translateX(-100%); }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.4rem;
+    }
+    .sidebar ul { list-style: none; padding: 0; }
+    .sidebar li { margin: 1rem 0; }
+    .sidebar a { display: flex; align-items: center; padding: 0.5rem 1rem; font-size: 1rem; }
+    .sidebar a:hover { background: rgba(255,255,255,0.1); border-radius: 8px; }
+    .sidebar a span { margin-left: 8px; }
+
+    /* === Toggle button === */
+    .toggle-btn {
+      position: fixed;
+      top: 15px; left: 15px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 3;
+    }
+
+    /* === Main content === */
+    main {
+      margin-left: 240px;
+      padding: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+    .sidebar.closed ~ main { margin-left: 0; }
+
+    /* === Calendar === */
+    #calendar {
+      max-width: 900px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    }
+    .fc-toolbar-title {
+      font-size: 1.3rem !important;
+    }
+    .fc-daygrid-day {
+      background: rgba(255,255,255,0.02);
+    }
+    .fc-event {
+      font-size: 0.85rem;
+      border-radius: 6px;
+      padding: 2px 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar toggle -->
+  <button class="toggle-btn" id="toggleSidebar">☰</button>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <h2>🌠 Star Tracker</h2>
+    <ul>
+      <li><a href="index.html">🏠 <span>Home</span></a></li>
+      <li><a href="factfiles.html">📂 <span>Fact Files</span></a></li>
+      <li><a href="livesky.html">🔭 <span>Live Sky</span></a></li>
+      <li><a href="events.html">📅 <span>Events</span></a></li>
+      <li><a href="about.html">ℹ️ <span>About</span></a></li>
+    </ul>
+  </nav>
+
+  <!-- Main -->
+  <main>
+    <h1>📅 Cosmic Events Calendar</h1>
+    <p>Explore moon phases, eclipses, meteor showers, and planetary oppositions.</p>
+    <div id="calendar"></div>
+  </main>
+
+  <script>
+    /* === Sidebar toggle === */
+    const toggleBtn = document.getElementById("toggleSidebar");
+    const sidebar = document.getElementById("sidebar");
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("closed");
+    });
+
+    /* === Events generator (merged from events.js) === */
+    const START_YEAR = 2015;
+    const END_YEAR = 2035;
+    const MS_PER_DAY = 86400000;
+    const SYNODIC_MONTH_DAYS = 29.530588853;
+    const SYNODIC_MS = SYNODIC_MONTH_DAYS * MS_PER_DAY;
+    const EPOCH_NEWMOON = Date.UTC(2000, 0, 6, 18, 14, 0);
+
+    function isoDate(d) {
+      return d.toISOString().split("T")[0];
+    }
+
+    function generateMoonPhases(startDate, endDate) {
+      const phases = [];
+      const firstN = Math.floor((startDate.getTime() - EPOCH_NEWMOON) / SYNODIC_MS) - 1;
+      const lastN = Math.ceil((endDate.getTime() - EPOCH_NEWMOON) / SYNODIC_MS) + 1;
+      const phaseOffsets = [
+        { name: "🌑 New Moon", frac: 0.0 },
+        { name: "🌓 First Quarter", frac: 0.25 },
+        { name: "🌕 Full Moon", frac: 0.5 },
+        { name: "🌗 Last Quarter", frac: 0.75 }
+      ];
+      for (let n = firstN; n <= lastN; n++) {
+        const newMoonTime = EPOCH_NEWMOON + n * SYNODIC_MS;
+        for (const p of phaseOffsets) {
+          const t = new Date(newMoonTime + p.frac * SYNODIC_MS);
+          if (t >= startDate && t <= endDate) {
+            phases.push({ title: p.name, start: isoDate(t) });
+          }
+        }
+      }
+      return phases;
+    }
+
+    const METEOR_SHOWER_TEMPLATES = [
+      { name: "🌠 Quadrantids", monthDay: "01-04" },
+      { name: "🌠 Lyrids", monthDay: "04-22" },
+      { name: "🌠 Eta Aquariids", monthDay: "05-05" },
+      { name: "🌠 Perseids", monthDay: "08-12" },
+      { name: "🌠 Orionids", monthDay: "10-21" },
+      { name: "🌠 Leonids", monthDay: "11-17" },
+      { name: "🌠 Geminids", monthDay: "12-14" },
+      { name: "🌠 Ursids", monthDay: "12-22" }
+    ];
+    function generateMeteorShowers(startYear, endYear) {
+      const list = [];
+      for (let y = startYear; y <= endYear; y++) {
+        for (const t of METEOR_SHOWER_TEMPLATES) {
+          list.push({ title: t.name, start: `${y}-${t.monthDay}` });
+        }
+      }
+      return list;
+    }
+
+    const eclipses = [
+      { title: "🌑 Total Solar Eclipse", start: "2024-04-08" },
+      { title: "🌑 Annular Solar Eclipse", start: "2024-10-02" },
+      { title: "🌕 Total Lunar Eclipse", start: "2025-03-14" }
+    ];
+
+    const planetaryEvents = [
+      { title: "🪐 Jupiter Opposition", start: "2025-01-16" },
+      { title: "🪐 Saturn Opposition", start: "2025-02-28" },
+      { title: "🪐 Mars Opposition", start: "2025-12-18" }
+    ];
+
+    const startDate = new Date(Date.UTC(START_YEAR, 0, 1));
+    const endDate = new Date(Date.UTC(END_YEAR, 11, 31));
+    const moonPhases = generateMoonPhases(startDate, endDate);
+    const meteorShowers = generateMeteorShowers(START_YEAR, END_YEAR);
+
+    const allEvents = [
+      ...moonPhases,
+      ...meteorShowers,
+      ...eclipses,
+      ...planetaryEvents
+    ];
+
+    /* === Init FullCalendar === */
+    document.addEventListener("DOMContentLoaded", function() {
+      const calendarEl = document.getElementById("calendar");
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        events: allEvents,
+        height: "auto"
+      });
+      calendar.render();
+    });
+  </script>
+</body>
+</html>
