@@ -1,94 +1,89 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Live Sky 🌌 | Star Tracker</title>
+  <title>🔭 Live Sky | Star Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #000 url('stars-bg.gif') repeat; /* same starry background */
-      color: #eee;
-      display: flex;
-      height: 100vh;
-    }
-    .sidebar {
-      width: 220px;
-      background: #111;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid #333;
-    }
-    .sidebar h2 {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-    .nav-links {
-      list-style: none;
-      padding: 0;
-    }
-    .nav-links li {
-      margin: 10px 0;
-    }
-    .nav-links a {
-      display: block;
-      padding: 8px;
-      border-radius: 6px;
-      transition: background 0.2s;
-      color: #9cf;
-      text-decoration: none;
-    }
-    .nav-links a:hover {
-      background: #222;
-    }
-    .content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .content h1 {
-      text-align: center;
-      margin: 0;
-      padding: 12px;
-      background: rgba(0,0,0,0.6);
-      border-bottom: 1px solid #333;
-    }
-    iframe {
-      flex: 1;
-      border: none;
-      width: 100%;
-    }
-  </style>
+  <!-- global site styles -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <h2>🌌 Star Tracker</h2>
-    <ul class="nav-links">
-      <li><a href="index.html">🏠 Home</a></li>
-      <li><a href="factfiles.html">📖 Fact Files</a></li>
-      <li><a href="livesky.html">🔭 Live Sky</a></li>
-      <li><a href="events.html">📅 Events Calendar</a></li>
-      <li><a href="about.html">ℹ️ About</a></li>
+  <!-- starfield background -->
+  <div id="starfield" aria-hidden="true"></div>
+
+  <!-- icon strip -->
+  <div class="icon-strip" aria-hidden="true">
+    <a href="index.html" title="Home">🏠</a>
+    <a href="factfiles.html" title="Fact Files">📂</a>
+    <a href="livesky.html" title="Live Sky">🔭</a>
+    <a href="events.html" title="Events">📅</a>
+    <a href="about.html" title="About">ℹ️</a>
+  </div>
+
+  <!-- toggle button -->
+  <button class="toggle-btn" id="toggleBtn" aria-label="Toggle sidebar">☰</button>
+
+  <!-- sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <ul>
+      <li><a href="index.html"><span class="icon">🏠</span><span class="label">Home</span></a></li>
+      <li><a href="factfiles.html"><span class="icon">📖</span><span class="label">Fact Files</span></a></li>
+      <li><a href="livesky.html" class="active"><span class="icon">🔭</span><span class="label">Live Sky</span></a></li>
+      <li><a href="events.html"><span class="icon">📅</span><span class="label">Events</span></a></li>
+      <li><a href="about.html"><span class="icon">ℹ️</span><span class="label">About</span></a></li>
     </ul>
   </aside>
 
-  <!-- Main -->
-  <main class="content">
-    <h1>🌌 Live Sky View</h1>
-    <!-- Stellarium Web Embed -->
-    <iframe 
-    src="https://stellarium.org/stellarium-web" 
-    width="100%" 
-    height="600px" 
-    frameborder="0" 
-    allowfullscreen>
-</iframe>
-
+  <!-- main content -->
+  <main class="content" id="mainContent">
+    <h1>🔭 Live Sky View</h1>
+    <div class="card" style="width:100%; height:90vh; padding:0; overflow:hidden;">
+      <iframe 
+        src="https://stellarium.org/stellarium-web" 
+        width="100%" 
+        height="100%" 
+        frameborder="0" 
+        allowfullscreen>
+      </iframe>
+    </div>
   </main>
+
+  <!-- scripts -->
+  <script>
+    // Starfield generator
+    (function makeStarfield() {
+      const container = document.getElementById('starfield');
+      if (!container) return;
+      const count = Math.min(Math.max(window.innerWidth * window.innerHeight / 60000, 60), 420) | 0;
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const size = (Math.random() * 2.5) + 0.6;
+        s.style.width = s.style.height = `${size}px`;
+        s.style.left = `${Math.random() * 100}%`;
+        s.style.top = `${Math.random() * 100}%`;
+        s.style.opacity = Math.random() * 0.9;
+        const dur = (Math.random() * 3.8) + 1.5;
+        s.style.animation = `twinkle ${dur}s linear ${Math.random() * 3}s infinite`;
+        container.appendChild(s);
+      }
+    })();
+
+    // Sidebar toggle
+    const toggleBtn = document.getElementById('toggleBtn');
+    const sidebar = document.getElementById('sidebar');
+    const content = document.getElementById('mainContent');
+
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('closed');
+      content.classList.toggle('shifted');
+    });
+
+    // auto-close on small screens
+    if (window.innerWidth <= 820) {
+      sidebar.classList.add('closed');
+      content.classList.add('shifted');
+    }
+  </script>
 </body>
 </html>
