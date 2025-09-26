@@ -1,137 +1,145 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>🌌 Cosmic Events Calendar</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- FullCalendar -->
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- global styles you provided -->
+  <link rel="stylesheet" href="style.css">
   <style>
-    /* === Base styles === */
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: radial-gradient(ellipse at bottom, #0d1b2a, #000);
-      color: #fff;
-      overflow-x: hidden;
+    /* page-specific calendar styles (kept small so global style.css remains authoritative) */
+    .calendar-container { max-width:1100px; width:100%; margin: 1.2rem auto; }
+    .calendar-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; }
+    .calendar-header h2 { font-size:1.3rem; }
+    .weekday-row, .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
     }
-    h1 { font-size: 1.8rem; margin: 0; }
-    a { text-decoration: none; color: inherit; }
-
-    /* === Starry background === */
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: url("https://www.transparenttextures.com/patterns/stardust.png");
-      opacity: 0.2;
-      z-index: 0;
+    .weekday {
+      font-weight:600;
+      font-size:0.85rem;
+      color: #cbd5e1;
+      text-align:center;
+      padding:6px 4px;
     }
-
-    /* === Sidebar === */
-    .sidebar {
-      position: fixed;
-      top: 0; left: 0;
-      width: 240px;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      padding-top: 20px;
-      transform: translateX(0);
-      transition: transform 0.3s ease;
-      z-index: 2;
-    }
-    .sidebar.closed { transform: translateX(-100%); }
-    .sidebar h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-size: 1.4rem;
-    }
-    .sidebar ul { list-style: none; padding: 0; }
-    .sidebar li { margin: 1rem 0; }
-    .sidebar a { display: flex; align-items: center; padding: 0.5rem 1rem; font-size: 1rem; }
-    .sidebar a:hover { background: rgba(255,255,255,0.1); border-radius: 8px; }
-    .sidebar a span { margin-left: 8px; }
-
-    /* === Toggle button === */
-    .toggle-btn {
-      position: fixed;
-      top: 15px; left: 15px;
-      background: #4f46e5;
-      color: white;
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      z-index: 3;
-    }
-
-    /* === Main content === */
-    main {
-      margin-left: 240px;
-      padding: 2rem;
-      position: relative;
-      z-index: 1;
-    }
-    .sidebar.closed ~ main { margin-left: 0; }
-
-    /* === Calendar === */
-    #calendar {
-      max-width: 900px;
-      margin: 0 auto;
-      background: rgba(255,255,255,0.03);
-      border-radius: 12px;
-      padding: 1rem;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
-    }
-    .fc-toolbar-title {
-      font-size: 1.3rem !important;
-    }
-    .fc-daygrid-day {
+    .day, .empty {
       background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.04);
+      min-height: 92px;
+      border-radius:10px;
+      padding:8px;
+      position:relative;
+      overflow:hidden;
+      transition: transform .12s ease, box-shadow .12s ease;
     }
-    .fc-event {
-      font-size: 0.85rem;
-      border-radius: 6px;
-      padding: 2px 4px;
+    .day:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+    .day.has-event { background: rgba(255,255,255,0.03); border-color: rgba(99,102,241,0.16); }
+    .day-number { font-weight:700; margin-bottom:6px; font-size:0.95rem; }
+    .day ul { list-style:none; padding-left:0; margin-top:6px; font-size:0.78rem; text-align:left; }
+    .day ul li { margin:4px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .event-badge { display:inline-block; padding:2px 6px; border-radius:6px; background: rgba(79,70,229,0.12); color:#dbeafe; font-size:0.75rem; }
+    /* small responsive tweak */
+    @media (max-width:720px) {
+      .day, .empty { min-height:72px; padding:6px; font-size:0.82rem; }
+      .calendar-container { padding: 0 12px; }
     }
+    /* starfield sits behind everything (style.css already has #starfield rules) */
   </style>
 </head>
 <body>
-  <!-- Sidebar toggle -->
-  <button class="toggle-btn" id="toggleSidebar">☰</button>
+  <!-- starfield element expected by style.css -->
+  <div id="starfield" aria-hidden="true"></div>
 
-  <!-- Sidebar -->
-  <nav class="sidebar" id="sidebar">
-    <h2>🌠 Star Tracker</h2>
+  <!-- icon strip (visible even when sidebar closed) -->
+  <div class="icon-strip" aria-hidden="true">
+    <a href="index.html" title="Home">🏠</a>
+    <a href="factfiles.html" title="Fact Files">📖</a>
+    <a href="livesky.html" title="Live Sky">🔭</a>
+    <a href="events.html" title="Events">📅</a>
+    <a href="about.html" title="About">ℹ️</a>
+  </div>
+
+  <!-- toggle button (positions defined in style.css) -->
+  <button class="toggle-btn" id="toggleBtn" aria-label="Toggle sidebar">☰</button>
+
+  <!-- sidebar (uses your style.css classes) -->
+  <aside class="sidebar" id="sidebar">
     <ul>
-      <li><a href="index.html">🏠 <span>Home</span></a></li>
-      <li><a href="factfiles.html">📂 <span>Fact Files</span></a></li>
-      <li><a href="livesky.html">🔭 <span>Live Sky</span></a></li>
-      <li><a href="events.html">📅 <span>Events</span></a></li>
-      <li><a href="about.html">ℹ️ <span>About</span></a></li>
+      <li><a href="index.html"><span class="icon">🏠</span><span class="label">Home</span></a></li>
+      <li><a href="factfiles.html"><span class="icon">📖</span><span class="label">Fact Files</span></a></li>
+      <li><a href="livesky.html"><span class="icon">🔭</span><span class="label">Live Sky</span></a></li>
+      <li><a href="events.html" class="active"><span class="icon">📅</span><span class="label">Events</span></a></li>
+      <li><a href="about.html"><span class="icon">ℹ️</span><span class="label">About</span></a></li>
     </ul>
-  </nav>
+  </aside>
 
-  <!-- Main -->
-  <main>
+  <!-- main content (style.css uses .content) -->
+  <main class="content" id="mainContent">
     <h1>📅 Cosmic Events Calendar</h1>
-    <p>Explore moon phases, eclipses, meteor showers, and planetary oppositions.</p>
-    <div id="calendar"></div>
+    <p class="card">Monthly grid of moon phases, meteor showers, eclipses and planetary oppositions. Click a day for details.</p>
+
+    <div class="calendar-container card">
+      <div class="calendar-header">
+        <div>
+          <button id="prevMonth" class="btn">‹ Prev</button>
+          <button id="nextMonth" class="btn">Next ›</button>
+        </div>
+        <h2 id="monthYear">Loading…</h2>
+        <div></div>
+      </div>
+
+      <div class="weekday-row" id="weekdayRow"></div>
+      <div class="calendar-grid" id="calendarGrid" aria-live="polite"></div>
+    </div>
   </main>
 
   <script>
-    /* === Sidebar toggle === */
-    const toggleBtn = document.getElementById("toggleSidebar");
-    const sidebar = document.getElementById("sidebar");
-    toggleBtn.addEventListener("click", () => {
-      sidebar.classList.toggle("closed");
-    });
+  /******************************************************************
+   * Starfield — simple twinkling stars to match global style.css
+   ******************************************************************/
+  (function makeStarfield() {
+    const container = document.getElementById('starfield');
+    if (!container) return;
+    const count = Math.min(Math.max(window.innerWidth * window.innerHeight / 60000, 60), 420) | 0;
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = (Math.random() * 2.5) + 0.6;
+      s.style.width = s.style.height = `${size}px`;
+      s.style.left = `${Math.random() * 100}%`;
+      s.style.top = `${Math.random() * 100}%`;
+      s.style.opacity = Math.random() * 0.9;
+      const dur = (Math.random() * 3.8) + 1.5;
+      s.style.animation = `twinkle ${dur}s linear ${Math.random() * 3}s infinite`;
+      container.appendChild(s);
+    }
+  })();
 
-    /* === Events generator (merged from events.js) === */
+  /******************************************************************
+   * Sidebar toggle — matches your style.css expectations
+   * - toggles .sidebar.closed
+   * - toggles .content.shifted so main margin-left adjusts
+   ******************************************************************/
+  const toggleBtn = document.getElementById('toggleBtn');
+  const sidebar = document.getElementById('sidebar');
+  const content = document.getElementById('mainContent');
+
+  toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('closed');
+    content.classList.toggle('shifted');
+  });
+
+  // Close sidebar by default on small screens
+  if (window.innerWidth <= 820) {
+    sidebar.classList.add('closed');
+    content.classList.add('shifted');
+  }
+
+  /******************************************************************
+   * Events generator (merged from your events.js)
+   * Produces moonPhases, meteorShowers, eclipses, planetaryEvents
+   ******************************************************************/
+  const events = (() => {
     const START_YEAR = 2015;
     const END_YEAR = 2035;
     const MS_PER_DAY = 86400000;
@@ -140,7 +148,10 @@
     const EPOCH_NEWMOON = Date.UTC(2000, 0, 6, 18, 14, 0);
 
     function isoDate(d) {
-      return d.toISOString().split("T")[0];
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
     }
 
     function generateMoonPhases(startDate, endDate) {
@@ -158,10 +169,15 @@
         for (const p of phaseOffsets) {
           const t = new Date(newMoonTime + p.frac * SYNODIC_MS);
           if (t >= startDate && t <= endDate) {
-            phases.push({ title: p.name, start: isoDate(t) });
+            phases.push({
+              date: isoDate(t),
+              utc: t.toISOString(),
+              phase: p.name
+            });
           }
         }
       }
+      phases.sort((a, b) => (a.utc < b.utc ? -1 : 1));
       return phases;
     }
 
@@ -179,22 +195,28 @@
       const list = [];
       for (let y = startYear; y <= endYear; y++) {
         for (const t of METEOR_SHOWER_TEMPLATES) {
-          list.push({ title: t.name, start: `${y}-${t.monthDay}` });
+          const iso = `${y}-${t.monthDay}T00:00:00Z`;
+          list.push({
+            name: t.name,
+            peak: iso.split('T')[0],
+            peakUTC: iso
+          });
         }
       }
       return list;
     }
 
+    // small sample eclipse & planetary data (keeps file size reasonable)
     const eclipses = [
-      { title: "🌑 Total Solar Eclipse", start: "2024-04-08" },
-      { title: "🌑 Annular Solar Eclipse", start: "2024-10-02" },
-      { title: "🌕 Total Lunar Eclipse", start: "2025-03-14" }
+      { dateUTC: "2024-04-08T18:18:29Z", type: "🌑 Total Solar Eclipse" },
+      { dateUTC: "2024-10-02T18:46:13Z", type: "🌑 Annular Solar Eclipse" },
+      { dateUTC: "2025-03-14T06:59:56Z", type: "🌕 Total Lunar Eclipse" }
     ];
 
     const planetaryEvents = [
-      { title: "🪐 Jupiter Opposition", start: "2025-01-16" },
-      { title: "🪐 Saturn Opposition", start: "2025-02-28" },
-      { title: "🪐 Mars Opposition", start: "2025-12-18" }
+      { dateUTC: "2025-01-16T00:00:00Z", event: "🪐 Jupiter Opposition" },
+      { dateUTC: "2025-02-28T00:00:00Z", event: "🪐 Saturn Opposition" },
+      { dateUTC: "2025-12-18T00:00:00Z", event: "🪐 Mars Opposition" }
     ];
 
     const startDate = new Date(Date.UTC(START_YEAR, 0, 1));
@@ -202,23 +224,106 @@
     const moonPhases = generateMoonPhases(startDate, endDate);
     const meteorShowers = generateMeteorShowers(START_YEAR, END_YEAR);
 
-    const allEvents = [
-      ...moonPhases,
-      ...meteorShowers,
-      ...eclipses,
-      ...planetaryEvents
-    ];
+    return { moonPhases, meteorShowers, eclipses, planetaryEvents };
+  })();
 
-    /* === Init FullCalendar === */
-    document.addEventListener("DOMContentLoaded", function() {
-      const calendarEl = document.getElementById("calendar");
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: "dayGridMonth",
-        events: allEvents,
-        height: "auto"
-      });
-      calendar.render();
+  /******************************************************************
+   * Calendar rendering (monthly grid)
+   ******************************************************************/
+  const calendarGrid = document.getElementById('calendarGrid');
+  const weekdayRow = document.getElementById('weekdayRow');
+  const monthYear = document.getElementById('monthYear');
+  const prevMonthBtn = document.getElementById('prevMonth');
+  const nextMonthBtn = document.getElementById('nextMonth');
+  let current = new Date();
+
+  function drawWeekdays() {
+    const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    weekdayRow.innerHTML = '';
+    weekdays.forEach(w => {
+      const el = document.createElement('div');
+      el.className = 'weekday';
+      el.textContent = w;
+      weekdayRow.appendChild(el);
     });
+  }
+
+  function renderCalendar(date) {
+    calendarGrid.innerHTML = '';
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const monthNames = [
+      "January","February","March","April","May","June",
+      "July","August","September","October","November","December"
+    ];
+    monthYear.textContent = `${monthNames[month]} ${year}`;
+
+    // leading empty cells
+    for (let i = 0; i < firstDay.getDay(); i++) {
+      const c = document.createElement('div');
+      c.className = 'empty';
+      calendarGrid.appendChild(c);
+    }
+
+    // days
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const cell = document.createElement('div');
+      cell.className = 'day';
+      const dn = document.createElement('div');
+      dn.className = 'day-number';
+      dn.textContent = d;
+      cell.appendChild(dn);
+
+      const cellDate = new Date(Date.UTC(year, month, d));
+      const iso = cellDate.toISOString().split('T')[0];
+
+      // collect events for this day (safe checks)
+      const dayEvents = [
+        ...events.moonPhases.filter(e => e.date === iso),
+        ...events.meteorShowers.filter(e => e.peak === iso),
+        ...events.eclipses.filter(e => e.dateUTC && e.dateUTC.startsWith(iso)),
+        ...events.planetaryEvents.filter(e => e.dateUTC && e.dateUTC.startsWith(iso))
+      ];
+
+      if (dayEvents.length) {
+        const ul = document.createElement('ul');
+        dayEvents.forEach(ev => {
+          const li = document.createElement('li');
+          const text = ev.phase || ev.name || ev.type || ev.event || ev.title || '';
+          li.innerHTML = `<span class="event-badge">${text}</span>`;
+          ul.appendChild(li);
+        });
+        cell.appendChild(ul);
+        cell.classList.add('has-event');
+      }
+
+      // optional: click to toggle details (simple)
+      cell.addEventListener('click', () => {
+        const wasOpen = cell.classList.toggle('open');
+        if (wasOpen) cell.style.boxShadow = '0 10px 30px rgba(79,70,229,0.12)';
+        else cell.style.boxShadow = '';
+      });
+
+      calendarGrid.appendChild(cell);
+    }
+  }
+
+  // navigation
+  prevMonthBtn.addEventListener('click', () => {
+    current.setMonth(current.getMonth() - 1);
+    renderCalendar(current);
+  });
+  nextMonthBtn.addEventListener('click', () => {
+    current.setMonth(current.getMonth() + 1);
+    renderCalendar(current);
+  });
+
+  // initialise
+  drawWeekdays();
+  renderCalendar(current);
   </script>
 </body>
 </html>
