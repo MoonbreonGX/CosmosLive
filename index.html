@@ -7,10 +7,10 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <!-- star background container -->
+  <!-- star background container (style.css expects #starfield) -->
   <div id="starfield" aria-hidden="true"></div>
 
-  <!-- Toggle button -->
+  <!-- Toggle button (your existing placement) -->
   <button id="toggleBtn" class="toggle-btn" aria-label="Toggle sidebar">☰</button>
 
   <!-- Sidebar -->
@@ -20,7 +20,8 @@
       <li><a href="factfiles.html">📖 <span class="label">Fact Files</span></a></li>
       <li><a href="livesky.html">🔭 <span class="label">Live Sky</span></a></li>
       <li><a href="events.html">📅 <span class="label">Events</span></a></li>
-      <li><a href="#">ℹ️ <span class="label">About</span></a></li>
+      <li><a href="space-news.html">🛰️ <span class="label">Space News</span></a></li>
+      <li><a href="about.html">ℹ️ <span class="label">About</span></a></li>
     </ul>
   </nav>
 
@@ -30,7 +31,8 @@
     <a href="factfiles.html" title="Fact Files">📖</a>
     <a href="livesky.html" title="Live Sky">🔭</a>
     <a href="events.html" title="Events">📅</a>
-    <a href="#" title="About">ℹ️</a>
+    <a href="space-news.html" title="Space News">🛰️</a>
+    <a href="about.html" title="About">ℹ️</a>
   </div>
 
   <!-- Main content -->
@@ -43,8 +45,195 @@
       <div id="clock" class="time">—</div>
       <a class="btn" href="livesky.html">See The Night Sky Live!</a>
     </section>
+
+    <!-- ========== Tonight's Sky widget (placed below your clock card) ========== -->
+    <section class="card" id="tonights-sky" aria-labelledby="tonights-sky-title" style="margin-top:1rem;">
+      <h2 id="tonights-sky-title">🌌 Space News</h2>
+      <p id="tonight-location" style="opacity:.95; margin-bottom:0.25rem;">Location: <span id="loc-display">Detecting…</span></p>
+      <p><strong>🌙 Moon Phase:</strong> <span id="moon-phase">Loading…</span></p>
+      <p><strong>🪐 Visible Planets:</strong> <span id="planets">Loading…</span></p>
+      <p style="margin-top:.6rem;"><a class="btn" href="space-news.html">Full News →</a></p>
+      <p id="tonight-note" style="margin-top:.6rem; font-size:0.85rem; opacity:.85; color:#cbd5e1;">If you allow location access the widget will use your coordinates; otherwise it defaults to London.</p>
+    </section>
+    <!-- ====================================================================== -->
+
   </main>
 
+  <!-- your existing main script (clock, sidebar etc.) — keep this -->
   <script defer src="./script.js"></script>
+
+  <!-- Tonight's Sky widget script (runs after DOM) -->
+  <script>
+  (function () {
+    // Constants for moon calculation
+    const EPOCH_NEWMOON_MS = Date.UTC(2000, 0, 6, 18, 14, 0);
+    const SYNODIC_DAYS = 29.530588853;
+    const MS_PER_DAY = 86400000;
+
+    // DOM elements
+    const moonEl = document.getElementById('moon-phase');
+    const planetsEl = document.getElementById('planets');
+    const locEl = document.getElementById('loc-display');
+    const noteEl = document.getElementById('tonight-note');
+
+    // Simple moon-phase function (synodic method)
+    function computeMoonPhase(now) {
+      const diffMs = now.getTime() - EPOCH_NEWMOON_MS;
+      const daysSinceEpoch = diffMs / MS_PER_DAY;
+      // cycles since epoch (floating)
+      const cycles = daysSinceEpoch / SYNODIC_DAYS;
+      // fractional part determines phase
+      let frac = cycles - Math.floor(cycles);
+      if (frac < 0) frac += 1; // normalize
+      const phaseAngle = frac * 360; // 0..360
+      // illumination fraction k = (1 - cos(2π * frac)) / 2
+      const k = (1 - Math.cos(2 * Math.PI * frac)) / 2;
+      return { frac, phaseAngle, k };
+    }
+
+    function phaseNameFromAngle(angle) {
+      angle = (angle % 360 + 360) % 360;
+      if (angle < 22.5) return "New Moon 🌑";
+      if (angle < 67.5) return "Waxing Crescent 🌒";
+      if (angle < 112.5) return "First Quarter 🌓";
+      if (angle < 157.5) return "Waxing Gibbous 🌔";
+      if (angle < 202.5) return "Full Moon 🌕";
+      if (angle < 247.5) return "Waning Gibbous 🌖";
+      if (angle < 292.5) return "Last Quarter 🌗";
+      if (angle < 337.5) return "Waning Crescent 🌘";
+      return "New Moon 🌑";
+    }
+
+    // Seasonal fallback for planets (if no precise library)
+    function seasonalPlanets(now, lat) {
+      // Simple heuristic mapping by month (Northern hemisphere friendly)
+      const mon = now.getMonth() + 1;
+      const list = [];
+      if ([3,4,5,6,7].includes(mon)) list.push("Venus");
+      if ([8,9,10,11].includes(mon)) list.push("Jupiter");
+      if ([6,7,8].includes(mon)) list.push("Saturn");
+      if ([12,1,2].includes(mon)) list.push("Mars");
+      if (mon <= 3 || mon >= 9) list.push("Mercury");
+      return list;
+    }
+
+    // Try to compute visible planets using Astronomy Engine if available
+    async function computeVisiblePlanets(lat, lon) {
+      const now = new Date();
+      // If Astronomy Engine is present, try to use it
+      if (window.Astronomy) {
+        try {
+          const obs = new Astronomy.Observer(lat, lon, 0);
+          const names = ["Mercury","Venus","Mars","Jupiter","Saturn"];
+          const visible = [];
+          for (const n of names) {
+            try {
+              // Equator -> ra/dec (fields may differ across versions)
+              const equ = Astronomy.Equator(n, now, obs, true, true);
+              // some builds return .ra/.dec, older may return .rightAscension/.declination
+              const ra = equ.ra ?? equ.rightAscension ?? equ.ra2000;
+              const dec = equ.dec ?? equ.declination ?? equ.dec2000;
+              const hor = Astronomy.Horizon(now, obs, ra, dec, 'normal');
+              if (hor && typeof hor.altitude === 'number' && hor.altitude > 0) {
+                visible.push(n);
+              }
+            } catch (e) {
+              // ignore per-planet failures
+              console.warn("Planet calc failed for", n, e);
+            }
+          }
+          // If we got at least one result, return it
+          if (visible.length) return { source: "astronomy-engine", list: visible };
+        } catch (err) {
+          console.warn("Astronomy engine failed:", err);
+        }
+      }
+      // Fallback: seasonal heuristic
+      return { source: "fallback", list: seasonalPlanets(now, lat) };
+    }
+
+    // update UI function
+    function updateUI(locationName, lat, lon) {
+      const now = new Date();
+      // moon
+      const moon = computeMoonPhase(now);
+      const name = phaseNameFromAngle(moon.phaseAngle);
+      const pct = (moon.k * 100).toFixed(1);
+      moonEl.textContent = `${name} — ${pct}% lit (approx)`;
+
+      // planets (attempt precise then fallback)
+      computeVisiblePlanets(lat, lon).then(res => {
+        const list = res.list || [];
+        planetsEl.textContent = list.length ? list.join(", ") : "None visible (fallback)";
+        // small note
+        if (res.source === "astronomy-engine") {
+          noteEl.textContent = "Computed using Astronomy Engine (if loaded).";
+        } else {
+          noteEl.textContent = "Showing a seasonal approximation (no astronomy engine loaded).";
+        }
+      }).catch(err => {
+        console.error("Planets compute failed:", err);
+        planetsEl.textContent = "Unavailable";
+        noteEl.textContent = "Planets unavailable.";
+      });
+    }
+
+    // Obtain user's location with timeout and fallback to London
+    function detectLocationAndUpdate() {
+      const defaultLat = 51.5074;
+      const defaultLon = -0.1278;
+      locEl.textContent = "Detecting…";
+      let done = false;
+
+      // small helper to finalize with coords
+      function finish(lat, lon, label) {
+        if (done) return;
+        done = true;
+        locEl.textContent = label || `${lat.toFixed(4)}°, ${lon.toFixed(4)}° (approx)`;
+        updateUI(label || "Your location", lat, lon);
+      }
+
+      // try browser geolocation with short timeout
+      if (navigator.geolocation) {
+        const geoOpts = { timeout: 6000, maximumAge: 60000, enableHighAccuracy: false };
+        navigator.geolocation.getCurrentPosition(
+          pos => finish(pos.coords.latitude, pos.coords.longitude, "Your location"),
+          err => {
+            console.warn("Geolocation failed or denied:", err);
+            finish(defaultLat, defaultLon, "London (default)");
+          },
+          geoOpts
+        );
+
+        // safety fallback: if geolocation doesn't call back, use default after 7s
+        setTimeout(() => {
+          if (!done) finish(defaultLat, defaultLon, "London (default)");
+        }, 7000);
+      } else {
+        // no geolocation API
+        finish(defaultLat, defaultLon, "London (default)");
+      }
+    }
+
+    // Run when DOM is ready — keep performance friendly
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", detectLocationAndUpdate);
+    } else {
+      detectLocationAndUpdate();
+    }
+
+    // also refresh the moon phase every hour (to keep it reasonably current)
+    setInterval(() => {
+      // try to re-run with same displayed location text parse
+      const display = locEl.textContent;
+      if (display && display.includes("London")) {
+        updateUI("London", 51.5074, -0.1278);
+      } else {
+        // don't try to parse coords from "Your location" text - leave as is
+        // user can refresh to get updated precise location-based results
+      }
+    }, 1000 * 60 * 60); // 1 hour
+  })();
+  </script>
 </body>
 </html>
