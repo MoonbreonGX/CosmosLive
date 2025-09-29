@@ -1,31 +1,76 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Space News 🛰️ | Cosmos Live</title>
-  <link rel="stylesheet" href="./style.css">
+  <meta charset="UTF-8">
+  <title>🚀 Space News | Cosmos Live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
   <style>
-    /* Extra styling just for the news list */
-    #news-list {
-      margin-top: 1rem;
-      text-align: left;
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #0a0f1c;
+      color: #fff;
     }
-    #news-list li {
-      margin: 0.6rem 0;
-      line-height: 1.4;
+    h1 {
+      text-align: center;
+      padding: 20px;
     }
-    #news-list a {
-      color: #9cf;
+
+    /* Grid News Board */
+    .news-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .news-item {
+      background: rgba(255,255,255,0.08);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .news-item:hover {
+      transform: translateY(-4px);
+    }
+    .news-item img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+    .news-content {
+      padding: 12px;
+    }
+    .news-content h3 {
+      font-size: 1rem;
+      margin: 0 0 6px;
+    }
+    .news-content p {
+      font-size: 0.85rem;
+      margin: 0 0 10px;
+      color: #ccc;
+    }
+    .news-content a {
+      color: #7cc9ff;
       text-decoration: none;
+      font-weight: bold;
+      font-size: 0.9rem;
     }
-    #news-list a:hover {
+    .news-content a:hover {
       text-decoration: underline;
     }
   </style>
 </head>
 <body>
+  <!-- Star background -->
   <div id="starfield" aria-hidden="true"></div>
+
+  <!-- Toggle button -->
   <button id="toggleBtn" class="toggle-btn" aria-label="Toggle sidebar">☰</button>
 
   <!-- Sidebar -->
@@ -40,109 +85,60 @@
     </ul>
   </nav>
 
+  <!-- Icon strip -->
   <div class="icon-strip" aria-hidden="false">
     <a href="index.html" title="Home">🏠</a>
     <a href="factfiles.html" title="Fact Files">📖</a>
     <a href="livesky.html" title="Live Sky">🔭</a>
     <a href="events.html" title="Events">📅</a>
     <a href="space-news.html" title="Space News">🛰️</a>
+    <a href="about.html" title="About">ℹ️</a>
   </div>
 
-  <!-- Main -->
-  <main id="content" class="content">
-    <h1>🛰️ Space News & Tonight’s Sky</h1>
-    <p>Stay up to date with cosmic events and astronomy headlines.</p>
-
-    <!-- Tonight's Sky widget (bigger version) -->
-    <section class="card" id="tonights-sky">
-      <h2>🌌 Tonight's Sky</h2>
-      <p id="tonight-location">Location: <span id="loc-display">Detecting…</span></p>
-      <p><strong>🌙 Moon Phase:</strong> <span id="moon-phase">Loading…</span></p>
-      <p><strong>🪐 Visible Planets:</strong> <span id="planets">Loading…</span></p>
-    </section>
-
-    <!-- Space news feed -->
-    <section class="card" style="margin-top:1rem;">
-      <h2>📰 Latest Space Headlines</h2>
-      <ul id="news-list"><li>Loading headlines…</li></ul>
-    </section>
+  <!-- Main Content -->
+  <main class="content">
+    <h1>📰 Latest Space News</h1>
+    <div id="news" class="news-container">
+      <p style="grid-column: 1/-1; text-align:center;">Loading space news...</p>
+    </div>
   </main>
 
-  <script src="./script.js" defer></script>
-
-  <!-- Tonight's Sky + News script -->
   <script>
-  // ---- Moon Phase Calculation ----
-  const EPOCH_NEWMOON_MS = Date.UTC(2000,0,6,18,14,0);
-  const SYNODIC_DAYS = 29.530588853;
-  const MS_PER_DAY = 86400000;
-  function computeMoonPhase(now){
-    const diffMs = now.getTime() - EPOCH_NEWMOON_MS;
-    const days = diffMs/MS_PER_DAY;
-    let frac = (days/SYNODIC_DAYS) % 1;
-    if(frac<0) frac+=1;
-    const angle = frac*360;
-    const illum = (1-Math.cos(2*Math.PI*frac))/2;
-    return {angle, illum};
-  }
-  function phaseName(angle){
-    if(angle<22.5) return "New Moon 🌑";
-    if(angle<67.5) return "Waxing Crescent 🌒";
-    if(angle<112.5) return "First Quarter 🌓";
-    if(angle<157.5) return "Waxing Gibbous 🌔";
-    if(angle<202.5) return "Full Moon 🌕";
-    if(angle<247.5) return "Waning Gibbous 🌖";
-    if(angle<292.5) return "Last Quarter 🌗";
-    if(angle<337.5) return "Waning Crescent 🌘";
-    return "New Moon 🌑";
-  }
+    async function fetchSpaceNews() {
+      try {
+        const apiUrl = "https://api.spaceflightnewsapi.net/v4/articles/?limit=20&ordering=-published_at";
+        const response = await fetch(apiUrl);
+        const data = await response.json();
 
-  // ---- Fallback planet list ----
-  function seasonalPlanets(now){
-    const m = now.getMonth()+1;
-    const list=[];
-    if([3,4,5,6,7].includes(m)) list.push("Venus");
-    if([8,9,10,11].includes(m)) list.push("Jupiter");
-    if([6,7,8].includes(m)) list.push("Saturn");
-    if([12,1,2].includes(m)) list.push("Mars");
-    if(m<=3||m>=9) list.push("Mercury");
-    return list;
-  }
+        const newsContainer = document.getElementById("news");
+        newsContainer.innerHTML = "";
 
-  // ---- Update Tonight's Sky ----
-  function updateSky(lat=51.5074, lon=-0.1278, label="London"){
-    document.getElementById("loc-display").textContent = label;
-    const now = new Date();
-    const {angle, illum} = computeMoonPhase(now);
-    document.getElementById("moon-phase").textContent =
-      phaseName(angle) + " — " + (illum*100).toFixed(1) + "% lit";
-    document.getElementById("planets").textContent = seasonalPlanets(now).join(", ");
-  }
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      pos=>updateSky(pos.coords.latitude,pos.coords.longitude,"Your location"),
-      ()=>updateSky()
-    );
-  } else updateSky();
-
-  // ---- News Feed (NASA RSS via rss2json proxy) ----
-  async function loadNews(){
-    const list=document.getElementById("news-list");
-    try{
-      const url="https://api.rss2json.com/v1/api.json?rss_url=https://www.nasa.gov/rss/dyn/breaking_news.rss";
-      const res=await fetch(url);
-      const data=await res.json();
-      list.innerHTML="";
-      data.items.slice(0,6).forEach(item=>{
-        const li=document.createElement("li");
-        li.innerHTML=`<a href="${item.link}" target="_blank">${item.title}</a>`;
-        list.appendChild(li);
-      });
-    }catch(e){
-      list.innerHTML="<li>Failed to load news.</li>";
+        data.results.forEach(article => {
+          const div = document.createElement("div");
+          div.className = "news-item";
+          div.innerHTML = `
+            <img src="${article.image_url}" alt="News image">
+            <div class="news-content">
+              <h3>${article.title}</h3>
+              <p>${article.summary.slice(0, 120)}...</p>
+              <a href="${article.url}" target="_blank">Read More →</a>
+            </div>
+          `;
+          newsContainer.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Error fetching space news:", err);
+        document.getElementById("news").innerHTML =
+          "<p style='grid-column:1/-1;text-align:center;'>Failed to load news.</p>";
+      }
     }
-  }
-  loadNews();
+
+    fetchSpaceNews();
+
+    // Sidebar toggle
+    document.getElementById("toggleBtn").addEventListener("click", () => {
+      document.getElementById("sidebar").classList.toggle("open");
+    });
   </script>
 </body>
 </html>
