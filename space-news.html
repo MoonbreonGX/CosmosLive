@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Space News 🛰️ | Cosmos Live</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    /* Extra styling just for the news list */
+    #news-list {
+      margin-top: 1rem;
+      text-align: left;
+    }
+    #news-list li {
+      margin: 0.6rem 0;
+      line-height: 1.4;
+    }
+    #news-list a {
+      color: #9cf;
+      text-decoration: none;
+    }
+    #news-list a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="starfield" aria-hidden="true"></div>
+  <button id="toggleBtn" class="toggle-btn" aria-label="Toggle sidebar">☰</button>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+    <ul>
+      <li><a href="index.html">🏠 <span class="label">Home</span></a></li>
+      <li><a href="factfiles.html">📖 <span class="label">Fact Files</span></a></li>
+      <li><a href="livesky.html">🔭 <span class="label">Live Sky</span></a></li>
+      <li><a href="events.html">📅 <span class="label">Events</span></a></li>
+      <li><a href="space-news.html">🛰️ <span class="label">Space News</span></a></li>
+      <li><a href="about.html">ℹ️ <span class="label">About</span></a></li>
+    </ul>
+  </nav>
+
+  <div class="icon-strip" aria-hidden="false">
+    <a href="index.html" title="Home">🏠</a>
+    <a href="factfiles.html" title="Fact Files">📖</a>
+    <a href="livesky.html" title="Live Sky">🔭</a>
+    <a href="events.html" title="Events">📅</a>
+    <a href="space-news.html" title="Space News">🛰️</a>
+  </div>
+
+  <!-- Main -->
+  <main id="content" class="content">
+    <h1>🛰️ Space News & Tonight’s Sky</h1>
+    <p>Stay up to date with cosmic events and astronomy headlines.</p>
+
+    <!-- Tonight's Sky widget (bigger version) -->
+    <section class="card" id="tonights-sky">
+      <h2>🌌 Tonight's Sky</h2>
+      <p id="tonight-location">Location: <span id="loc-display">Detecting…</span></p>
+      <p><strong>🌙 Moon Phase:</strong> <span id="moon-phase">Loading…</span></p>
+      <p><strong>🪐 Visible Planets:</strong> <span id="planets">Loading…</span></p>
+    </section>
+
+    <!-- Space news feed -->
+    <section class="card" style="margin-top:1rem;">
+      <h2>📰 Latest Space Headlines</h2>
+      <ul id="news-list"><li>Loading headlines…</li></ul>
+    </section>
+  </main>
+
+  <script src="./script.js" defer></script>
+
+  <!-- Tonight's Sky + News script -->
+  <script>
+  // ---- Moon Phase Calculation ----
+  const EPOCH_NEWMOON_MS = Date.UTC(2000,0,6,18,14,0);
+  const SYNODIC_DAYS = 29.530588853;
+  const MS_PER_DAY = 86400000;
+  function computeMoonPhase(now){
+    const diffMs = now.getTime() - EPOCH_NEWMOON_MS;
+    const days = diffMs/MS_PER_DAY;
+    let frac = (days/SYNODIC_DAYS) % 1;
+    if(frac<0) frac+=1;
+    const angle = frac*360;
+    const illum = (1-Math.cos(2*Math.PI*frac))/2;
+    return {angle, illum};
+  }
+  function phaseName(angle){
+    if(angle<22.5) return "New Moon 🌑";
+    if(angle<67.5) return "Waxing Crescent 🌒";
+    if(angle<112.5) return "First Quarter 🌓";
+    if(angle<157.5) return "Waxing Gibbous 🌔";
+    if(angle<202.5) return "Full Moon 🌕";
+    if(angle<247.5) return "Waning Gibbous 🌖";
+    if(angle<292.5) return "Last Quarter 🌗";
+    if(angle<337.5) return "Waning Crescent 🌘";
+    return "New Moon 🌑";
+  }
+
+  // ---- Fallback planet list ----
+  function seasonalPlanets(now){
+    const m = now.getMonth()+1;
+    const list=[];
+    if([3,4,5,6,7].includes(m)) list.push("Venus");
+    if([8,9,10,11].includes(m)) list.push("Jupiter");
+    if([6,7,8].includes(m)) list.push("Saturn");
+    if([12,1,2].includes(m)) list.push("Mars");
+    if(m<=3||m>=9) list.push("Mercury");
+    return list;
+  }
+
+  // ---- Update Tonight's Sky ----
+  function updateSky(lat=51.5074, lon=-0.1278, label="London"){
+    document.getElementById("loc-display").textContent = label;
+    const now = new Date();
+    const {angle, illum} = computeMoonPhase(now);
+    document.getElementById("moon-phase").textContent =
+      phaseName(angle) + " — " + (illum*100).toFixed(1) + "% lit";
+    document.getElementById("planets").textContent = seasonalPlanets(now).join(", ");
+  }
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>updateSky(pos.coords.latitude,pos.coords.longitude,"Your location"),
+      ()=>updateSky()
+    );
+  } else updateSky();
+
+  // ---- News Feed (NASA RSS via rss2json proxy) ----
+  async function loadNews(){
+    const list=document.getElementById("news-list");
+    try{
+      const url="https://api.rss2json.com/v1/api.json?rss_url=https://www.nasa.gov/rss/dyn/breaking_news.rss";
+      const res=await fetch(url);
+      const data=await res.json();
+      list.innerHTML="";
+      data.items.slice(0,6).forEach(item=>{
+        const li=document.createElement("li");
+        li.innerHTML=`<a href="${item.link}" target="_blank">${item.title}</a>`;
+        list.appendChild(li);
+      });
+    }catch(e){
+      list.innerHTML="<li>Failed to load news.</li>";
+    }
+  }
+  loadNews();
+  </script>
+</body>
+</html>
